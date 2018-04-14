@@ -10,10 +10,11 @@ import (
 type HashBuffer interface {
 	Get(numberOfBytes int) ([]byte, int)
 	GetNext() (byte, bool)
+	Close()
 }
 
 type FileHashBuffer struct {
-	reader     io.Reader
+	reader     *os.File
 	bufferSize int
 	pointer    int
 	fillLevel  int
@@ -40,14 +41,22 @@ func NewHashBuffer(filespec string, bufferSize int) HashBuffer {
 	f, err := os.Open(filespec) // f : *os.File which implements io.Reader
 	fhb.reader = f
 	fhb.check(err)
-	defer f.Close()
 	fhb.isOpen = true
 	return fhb
 }
 
+func (fhb *FileHashBuffer) Close() {
+	if fhb.isOpen {
+		fmt.Println("Closing")
+		err := fhb.reader.Close()
+		fhb.check(err)
+		fhb.isOpen = false
+	}
+}
+
 // return byte[], number of bytes returned
 func (fhb *FileHashBuffer) Get(numberOfBytes int) ([]byte, int) {
-	if fhb.bytesAvailable() < numberOfBytes {
+	if fhb.bufferEmpty() || fhb.bytesAvailable() < numberOfBytes {
 		fhb.fillBuffer()
 	}
 	numberRead := numberOfBytes
@@ -75,6 +84,7 @@ func (fhb *FileHashBuffer) GetNext() (byte, bool) {
 
 func (fhb *FileHashBuffer) fillBuffer() {
 	if fhb.isOpen {
+		fmt.Println("Filling buffer")
 		// if we've read all of the buffer, then reset the pointer back to zero
 		if fhb.bufferEmpty() {
 			fhb.pointer = 0
@@ -84,10 +94,11 @@ func (fhb *FileHashBuffer) fillBuffer() {
 		bytesread, err := fhb.reader.Read(fhb.buffer[fhb.fillLevel:]) // reads up to len(buffer) bytes
 		if err != nil {
 			if err != io.EOF {
-				fmt.Println(err)
+				fhb.check(err)
+			} else {
+				fmt.Println("End of file, closing.")
 			}
-			fhb.isOpen = false
-			fmt.Println("End of file, closing.")
+			fhb.Close()
 		} else {
 			// add the amount read to the fillLevel
 			fhb.fillLevel += bytesread - 1
@@ -96,6 +107,8 @@ func (fhb *FileHashBuffer) fillBuffer() {
 			fmt.Printf("current fillLevel after read: %d  bytes read: %d\n",
 				fhb.fillLevel, bytesread)
 		}
+	} else {
+		fmt.Println("File is not open.")
 	}
 }
 
@@ -109,8 +122,7 @@ func (fhb *FileHashBuffer) bytesAvailable() (amt int) {
 
 func (fhb *FileHashBuffer) check(e error) {
 	if e != nil {
-		log.Fatal(e)
-		fhb.isOpen = false
-		// panic(e)
+		log.Printf("Error %v", e)
+		panic(e)
 	}
 }
