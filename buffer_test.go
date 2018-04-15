@@ -21,41 +21,52 @@ const bufferSize = 1024
 func TestBufferEmptyFileWithGet(t *testing.T) {
 	t.Log("start TestBufferEmptyFileWithGet")
 	hb := NewHashBuffer("./testdata/empty", bufferSize)
+	hb.SetTesting(t)
 	defer hb.Close()
-	{
-		t.Log("starting first")
-		buf, count := hb.Get(0)
-		if count != 0 {
-			t.Errorf("Error TestBufferVariousLengths: got count=%d, want 0", count)
-		}
-		len := len(buf)
-		if len != 0 {
-			t.Errorf("Error TestBufferVariousLengths: got length=%d, want 0", len)
-		}
-	}
-	{
-		t.Log("starting second")
-		buf, count := hb.Get(0)
-		if count != 0 {
-			t.Errorf("Error TestBufferVariousLengths(2): got count=%d, want 0", count)
-		}
-		len := len(buf)
-		if len != 0 {
-			t.Errorf("Error TestBufferVariousLengths(2): got length=%d, want 0", len)
-		}
-
-	}
+	testGet(t, hb, "TestBufferEmptyFileWithGet first pass", 0, 0)
+	testGet(t, hb, "TestBufferEmptyFileWithGet second pass", 0, 0)
 }
+
 func TestBufferEmptyFileWithGetNext(t *testing.T) {
 	t.Log("start TestBufferEmptyFileWithGetNext")
 	hb := NewHashBuffer("./testdata/empty", bufferSize)
+	hb.SetTesting(t)
 	defer hb.Close()
-	t.Log("starting")
-	outByte, ok := hb.GetNext()
-	if ok {
-		t.Error("Error TestBufferVariousLengths: got ok=true, want ok=false")
+	testGetNext(t, hb, "TestBufferEmptyFileWithGetNext first pass", false)
+	testGetNext(t, hb, "TestBufferEmptyFileWithGetNext second pass", false)
+}
+
+func testGet(t *testing.T, hb HashBuffer, title string, amountToGet int, expectedLength int) {
+	t.Logf("starting %s", title)
+	buf, count := hb.Get(amountToGet)
+	if count != expectedLength {
+		t.Errorf("Error %s :got count=%d, want %d", title, count, expectedLength)
 	}
-	if outByte != 0 {
-		t.Errorf("Error TestBufferVariousLengths: got outByte=%d, want 0", outByte)
+	if amountToGet == 0 {
+		if buf != nil {
+			t.Errorf("Error %s: got buf[] with length=%d, want buf == nil", title, len(buf))
+		}
+	} else {
+		len := len(buf)
+		if len != expectedLength {
+			t.Errorf("Error %s: got length=%d, want %d", title, len, expectedLength)
+		}
+	}
+}
+
+func testGetNext(t *testing.T, hb HashBuffer, title string, byteExpectedInReturn bool) {
+	t.Logf("starting %s", title)
+	outByte, ok := hb.GetNext()
+	if byteExpectedInReturn {
+		if !ok {
+			t.Errorf("Error %s: got ok=false, want ok=true", title)
+		}
+	} else {
+		if ok {
+			t.Errorf("Error %s: got ok=true, want ok=false", title)
+		}
+		if outByte != 0 {
+			t.Errorf("Error %s: got outByte=%d, want 0", title, outByte)
+		}
 	}
 }
