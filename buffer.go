@@ -79,10 +79,10 @@ func (fhb *FileHashBuffer) Get(numberOfBytes int) ([]byte, int) {
 		start := fhb.pointer
 		end := fhb.pointer + numberToUse
 		fhb.pointer += numberToUse
+		fhb.log(fmt.Sprintf("start %d  end %d  val %#x", start, end, fhb.buffer[start:end]))
 		return fhb.buffer[start:end], numberToUse
-	} else {
-		return nil, 0
 	}
+	return nil, 0
 }
 
 // GetNext returns the next available byte of data if available and true; if not available return nil and false.
@@ -95,6 +95,7 @@ func (fhb *FileHashBuffer) GetNext() (byte, bool) {
 	if !fhb.bufferEmpty() {
 		retval = fhb.buffer[fhb.pointer]
 		sent = true
+		fhb.pointer++
 	}
 	return retval, sent
 }
@@ -118,7 +119,7 @@ func (fhb *FileHashBuffer) fillBuffer() {
 			fhb.Close()
 		} else {
 			// add the amount read to the fillLevel
-			fhb.fillLevel += bytesread - 1
+			fhb.fillLevel += bytesread
 
 			// log amount read and the fillLevel
 			fhb.log(fmt.Sprintf("current fillLevel after read: %d  bytes read: %d\n",
