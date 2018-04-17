@@ -1,6 +1,7 @@
 package rollhash
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -48,17 +49,24 @@ func TestBufferOneByteFileWithGet(t *testing.T) {
 	testGetNextZero(t, hb, "TestBufferOneByteFileWithGet - GetNext round")
 }
 
-func TestBufferOneLessThanOneFileWithGet(t *testing.T) {
-	t.Log("start TestBufferOneLessThanOneFileWithGet")
-	hb := NewHashBuffer("./testdata/onelessthanone", bufferSize)
+func TestBufferFullSizes(t *testing.T) {
+	testBufferFullSizeOfVariousLengths(t, "./testdata/onelessthanone", "TestBufferOneLessThanOneFile", 1023)
+	testBufferFullSizeOfVariousLengths(t, "./testdata/onebuffer", "TestBufferOneBufferFile", 1024)
+	testBufferFullSizeOfVariousLengths(t, "./testdata/onebufferplusone", "TestBufferOneBufferPlusOneFile", 1025)
+	testBufferFullSizeOfVariousLengths(t, "./testdata/long", "TestBufferFullSizeFile", 35538)
+}
+
+func testBufferFullSizeOfVariousLengths(t *testing.T, filename string, title string, expectedSize int) {
+	t.Logf("start %s", title)
+	hb := NewHashBuffer(filename, bufferSize)
 	hb.SetTesting(t)
 	defer hb.Close()
-	testGet(t, hb, "TestBufferOneLessThanOneFileWithGet first round", 16, testData[0:16])
-	for i := 16; i <= 1022; i++ {
-		outByte, ok := testGetNextOne(t, hb, "TestBufferOneLessThanOneFileWithGet second round", testData[i])
+	testGet(t, hb, fmt.Sprintf("%s first round", title), 16, testData[0:16])
+	for i := 16; i <= (expectedSize - 1); i++ {
+		outByte, ok := testGetNextOne(t, hb, fmt.Sprintf("%s second round", title), testData[i])
 		t.Logf("index %d  val %#x (%s)  ok %t", i, outByte, string(outByte), ok)
 	}
-	testGetNextZero(t, hb, "TestBufferOneLessThanOneFileWithGet third round")
+	testGetNextZero(t, hb, fmt.Sprintf("%s third round", title))
 }
 
 func testGetZero(t *testing.T, hb HashBuffer, title string, amountToGet int) {
