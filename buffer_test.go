@@ -25,9 +25,9 @@ func TestBufferEmptyFileWithGet(t *testing.T) {
 	hb := NewHashBuffer("./testdata/empty", bufferSize)
 	hb.SetTesting(t)
 	defer hb.Close()
-	testGet(t, hb, "TestBufferEmptyFileWithGet first round", 16, testData[0:0])
-	testGet(t, hb, "TestBufferEmptyFileWithGet second round", 16, testData[0:0])
-	testGetNext(t, hb, "TestBufferEmptyFileWithGet third round", false)
+	testGetZero(t, hb, "TestBufferEmptyFileWithGet first round", 16)
+	testGetZero(t, hb, "TestBufferEmptyFileWithGet second round", 16)
+	testGetNextZero(t, hb, "TestBufferEmptyFileWithGet third round")
 }
 
 func TestBufferEmptyFileWithGetNext(t *testing.T) {
@@ -35,8 +35,8 @@ func TestBufferEmptyFileWithGetNext(t *testing.T) {
 	hb := NewHashBuffer("./testdata/empty", bufferSize)
 	hb.SetTesting(t)
 	defer hb.Close()
-	testGetNext(t, hb, "TestBufferEmptyFileWithGetNext first round", false)
-	testGetNext(t, hb, "TestBufferEmptyFileWithGetNext second round", false)
+	testGetNextZero(t, hb, "TestBufferEmptyFileWithGetNext first round")
+	testGetNextZero(t, hb, "TestBufferEmptyFileWithGetNext second round")
 }
 
 func TestBufferOneByteFileWithGet(t *testing.T) {
@@ -45,7 +45,7 @@ func TestBufferOneByteFileWithGet(t *testing.T) {
 	hb.SetTesting(t)
 	defer hb.Close()
 	testGet(t, hb, "TestBufferOneByteFileWithGet - Get round", 16, testData[0:1])
-	testGetNext(t, hb, "TestBufferOneByteFileWithGet - GetNext round", false)
+	testGetNextZero(t, hb, "TestBufferOneByteFileWithGet - GetNext round")
 }
 
 func TestBufferOneLessThanOneFileWithGet(t *testing.T) {
@@ -55,10 +55,14 @@ func TestBufferOneLessThanOneFileWithGet(t *testing.T) {
 	defer hb.Close()
 	testGet(t, hb, "TestBufferOneLessThanOneFileWithGet first round", 16, testData[0:16])
 	for i := 16; i <= 1022; i++ {
-		outByte, ok := testGetNext(t, hb, "TestBufferOneLessThanOneFileWithGet second round", true)
+		outByte, ok := testGetNextOne(t, hb, "TestBufferOneLessThanOneFileWithGet second round", testData[i])
 		t.Logf("index %d  val %#x (%s)  ok %t", i, outByte, string(outByte), ok)
 	}
-	testGetNext(t, hb, "TestBufferOneLessThanOneFileWithGet third round", false)
+	testGetNextZero(t, hb, "TestBufferOneLessThanOneFileWithGet third round")
+}
+
+func testGetZero(t *testing.T, hb HashBuffer, title string, amountToGet int) {
+	testGet(t, hb, title, amountToGet, []byte{})
 }
 
 func testGet(t *testing.T, hb HashBuffer, title string, amountToGet int, expected []byte) { // string may be multiple bytes / rune
@@ -86,8 +90,15 @@ func testGet(t *testing.T, hb HashBuffer, title string, amountToGet int, expecte
 		}
 	}
 }
+func testGetNextZero(t *testing.T, hb HashBuffer, title string) (byte, bool) {
+	return testGetNext(t, hb, title, false, 0)
+}
 
-func testGetNext(t *testing.T, hb HashBuffer, title string, byteExpectedInReturn bool) (byte, bool) {
+func testGetNextOne(t *testing.T, hb HashBuffer, title string, byteExpected byte) (byte, bool) {
+	return testGetNext(t, hb, title, true, byteExpected)
+}
+
+func testGetNext(t *testing.T, hb HashBuffer, title string, byteExpectedInReturn bool, byteExpected byte) (byte, bool) {
 	t.Logf("starting %s", title)
 	outByte, ok := hb.GetNext()
 	if byteExpectedInReturn {
