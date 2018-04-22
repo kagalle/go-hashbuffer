@@ -54,7 +54,7 @@ func (fhb *FileHashBuffer) SetTesting(t *testing.T) {
 	fhb.t = t
 }
 
-// Close clses the file stream if it is not already closed.
+// Close the file stream if it is not already closed.
 func (fhb *FileHashBuffer) Close() error {
 	if fhb.isOpen {
 		err := fhb.reader.Close()
