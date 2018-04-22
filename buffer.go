@@ -1,4 +1,4 @@
-package rollhash
+package hashbuffer
 
 import (
 	"io"
