@@ -68,17 +68,20 @@ func (fhb *FileHashBuffer) Close() error {
 
 // Get returns up to numberOfBytes of data as byte[], along with the number of bytes returned; if no bytes are available, return nil and 0.
 func (fhb *FileHashBuffer) Get(numberOfBytes int) ([]byte, int, error) {
-	if fhb.bufferEmpty() || fhb.bytesAvailable() < numberOfBytes {
+	// If the buffer is empty, or has less than the number of bytes we want, attempt to read in more data.
+	if fhb.bufferEmpty() || (fhb.bytesAvailable() < numberOfBytes) {
 		err := fhb.fillBuffer()
 		if err != nil {
 			return nil, 0, err
 		}
 	}
+	// We still may not have the number of bytes we want, if so, only use what is really available.
 	numberToUse := numberOfBytes
 	if fhb.bytesAvailable() < numberOfBytes {
 		numberToUse = fhb.bytesAvailable()
 	}
 	fhb.logf("number to use %d", numberToUse)
+	// if there is at least some data, return a slice to it, otherwise return nil/0.
 	if numberToUse > 0 {
 		start := fhb.pointer
 		end := fhb.pointer + numberToUse
