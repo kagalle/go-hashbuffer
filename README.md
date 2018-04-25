@@ -15,3 +15,27 @@ A rolling hash is an algorithm that generates checksums of a sliding window over
 `GetNext()` retrieves the next available byte.  It returns the byte and true to indicate success, or 0 and false if no byte is available; or an error.
 
 `SetTesting()` allows for logging to be sent when testing HashBuffer.  The output is available if the test is run in verbose mode (`go test -test.v`).
+
+Example usage:
+
+```go
+const bufferSize = 2048
+const windowSize = 16
+
+func main() {
+    hb, err := hashbuffer.NewHashBuffer("/home/ken/myfile", bufferSize)
+    // check err not nil
+    defer hb.Close()
+    // first read
+    buf, count, err := hb.Get(windowSize)
+    // check err
+    // use buf and count
+    for ok := true; ok; i++ { // do...while
+        // get next byte
+        nextByte, ok, err = hb.GetNext()
+        if ok {
+            // use nextByte
+        }
+    }
+}
+```
