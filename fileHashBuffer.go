@@ -6,16 +6,8 @@ import (
 	"testing"
 )
 
-// HashBuffer defines method to retrieve one or multiple bytes from a buffered stream of data.
-type HashBuffer interface {
-	Get(numberOfBytes int) ([]byte, int, error)
-	GetNext() (byte, bool, error)
-	Close() error
-	SetTesting(t *testing.T)
-}
-
-// FileHashBuffer is a file based HashBuffer.
-type FileHashBuffer struct {
+// fileHashBuffer is a file based HashBuffer.
+type fileHashBuffer struct {
 	reader     *os.File
 	bufferSize int
 	pointer    int
@@ -34,7 +26,7 @@ if fhb.bufferSize < windowSize {
 
 // NewHashBuffer creates a FileHashBuffer against the specified filespec, with the specified buffersize.
 func NewHashBuffer(filespec string, bufferSize int) (HashBuffer, error) {
-	fhb := new(FileHashBuffer)
+	fhb := new(fileHashBuffer)
 	fhb.bufferSize = bufferSize
 	fhb.fillLevel = 0
 	fhb.pointer = 0
@@ -50,12 +42,12 @@ func NewHashBuffer(filespec string, bufferSize int) (HashBuffer, error) {
 }
 
 // SetTesting allows for logging to be sent when testing HashBuffer.
-func (fhb *FileHashBuffer) SetTesting(t *testing.T) {
+func (fhb *fileHashBuffer) SetTesting(t *testing.T) {
 	fhb.t = t
 }
 
 // Close the file stream if it is not already closed.
-func (fhb *FileHashBuffer) Close() error {
+func (fhb *fileHashBuffer) Close() error {
 	if fhb.isOpen {
 		err := fhb.reader.Close()
 		if err != nil {
@@ -67,7 +59,7 @@ func (fhb *FileHashBuffer) Close() error {
 }
 
 // Get returns up to numberOfBytes of data as byte[], along with the number of bytes returned; if no bytes are available, return nil and 0.
-func (fhb *FileHashBuffer) Get(numberOfBytes int) ([]byte, int, error) {
+func (fhb *fileHashBuffer) Get(numberOfBytes int) ([]byte, int, error) {
 	// If the buffer is empty, or has less than the number of bytes we want, attempt to read in more data.
 	if fhb.bufferEmpty() || (fhb.bytesAvailable() < numberOfBytes) {
 		err := fhb.fillBuffer()
@@ -93,7 +85,7 @@ func (fhb *FileHashBuffer) Get(numberOfBytes int) ([]byte, int, error) {
 }
 
 // GetNext returns the next available byte of data if available and true; if not available return nil and false.
-func (fhb *FileHashBuffer) GetNext() (byte, bool, error) {
+func (fhb *fileHashBuffer) GetNext() (byte, bool, error) {
 	if fhb.bufferEmpty() {
 		err := fhb.fillBuffer()
 		if err != nil {
@@ -111,7 +103,7 @@ func (fhb *FileHashBuffer) GetNext() (byte, bool, error) {
 	return retval, sent, nil
 }
 
-func (fhb *FileHashBuffer) fillBuffer() error {
+func (fhb *fileHashBuffer) fillBuffer() error {
 	if fhb.isOpen {
 		fhb.log("Filling buffer")
 		// if we've read all of the buffer, then reset the pointer back to zero
@@ -143,20 +135,20 @@ func (fhb *FileHashBuffer) fillBuffer() error {
 	return nil
 }
 
-func (fhb *FileHashBuffer) bufferEmpty() (isEmpty bool) {
+func (fhb *fileHashBuffer) bufferEmpty() (isEmpty bool) {
 	return fhb.fillLevel == fhb.pointer
 }
 
-func (fhb *FileHashBuffer) bytesAvailable() (amt int) {
+func (fhb *fileHashBuffer) bytesAvailable() (amt int) {
 	return fhb.fillLevel - fhb.pointer
 }
 
-func (fhb *FileHashBuffer) log(message string) {
+func (fhb *fileHashBuffer) log(message string) {
 	if fhb.t != nil {
 		fhb.t.Log(message)
 	}
 }
-func (fhb *FileHashBuffer) logf(format string, args ...interface{}) {
+func (fhb *fileHashBuffer) logf(format string, args ...interface{}) {
 	if fhb.t != nil {
 		fhb.t.Logf(format, args...)
 	}
