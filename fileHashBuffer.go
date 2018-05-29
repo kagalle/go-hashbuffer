@@ -113,14 +113,14 @@ func (fhb *fileHashBuffer) fillBuffer() (err error) {
 			fhb.log("Preparing buffer to be refilled")
 			// move buffer at pointer + 1, windowsize - 1 to 0
 			// pointer is 0
-			copy(fhb.buffer[0:], fhb.buffer[fhb.pointer+1:fhb.pointer+fhb.windowSize-1])
+			copy(fhb.buffer[0:], fhb.buffer[fhb.pointer:fhb.pointer+fhb.windowSize-1])
 			fhb.pointer = 0
 			fhb.fillLevel = fhb.windowSize - 1 // -1 zero based, -1 drop one char of window ???
 		}
 		fhb.log("Filling buffer")
 		// beginning at the pointer, begin reading to fill as much of the buffer as we can
 		var bytesread int
-		bytesread, err = fhb.reader.Read(fhb.buffer[fhb.fillLevel:]) // reads up to len(buffer) bytes
+		bytesread, err = fhb.reader.Read(fhb.buffer[fhb.fillLevel+1:]) // reads up to len(buffer) bytes
 		if err != nil {
 			if err != io.EOF {
 				fhb.logf("Error %v", err)
@@ -161,9 +161,9 @@ func (fhb *fileHashBuffer) fillBuffer() (err error) {
 func (fhb *fileHashBuffer) bufferEmpty() (isEmpty bool) {
 	fhb.logf("fillLevel %d  pointer %d  windowSize %d  RHS %d  bufferEmpty %v",
 		fhb.fillLevel, fhb.pointer, fhb.windowSize,
-		(fhb.pointer + fhb.windowSize),
-		(fhb.fillLevel < (fhb.pointer + fhb.windowSize)))
-	return fhb.fillLevel < (fhb.pointer + fhb.windowSize)
+		(fhb.pointer + fhb.windowSize - 1),
+		(fhb.fillLevel < (fhb.pointer + fhb.windowSize - 1)))
+	return fhb.fillLevel < (fhb.pointer + fhb.windowSize - 1)
 }
 
 //  0 < (0 + w - 1)
