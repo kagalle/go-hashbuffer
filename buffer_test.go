@@ -20,10 +20,11 @@ import (
 // {"long", 35538},
 
 const bufferSize = 1024
+const windowSize = 16
 
 func TestBufferEmptyFileWithGet(t *testing.T) {
 	t.Log("start TestBufferEmptyFileWithGet")
-	hb, err := NewHashBuffer("./testdata/empty", bufferSize)
+	hb, err := NewHashBuffer("./testdata/empty", bufferSize, windowSize)
 	check(t, err)
 	hb.SetTesting(t)
 	defer func() {
@@ -38,7 +39,7 @@ func TestBufferEmptyFileWithGet(t *testing.T) {
 
 func TestBufferEmptyFileWithGetNext(t *testing.T) {
 	t.Log("start TestBufferEmptyFileWithGetNext")
-	hb, err := NewHashBuffer("./testdata/empty", bufferSize)
+	hb, err := NewHashBuffer("./testdata/empty", bufferSize, windowSize)
 	check(t, err)
 	hb.SetTesting(t)
 	defer func() {
@@ -52,7 +53,7 @@ func TestBufferEmptyFileWithGetNext(t *testing.T) {
 
 func TestBufferOneByteFileWithGet(t *testing.T) {
 	t.Log("start TestBufferOneByteFileWithGet")
-	hb, err := NewHashBuffer("./testdata/onebyte", bufferSize)
+	hb, err := NewHashBuffer("./testdata/onebyte", bufferSize, windowSize)
 	check(t, err)
 	hb.SetTesting(t)
 	defer func() {
@@ -73,7 +74,7 @@ func TestBufferFullSizes(t *testing.T) {
 
 func testBufferFullSizeOfVariousLengths(t *testing.T, filename string, title string, expectedSize int) {
 	t.Logf("start %s", title)
-	hb, err := NewHashBuffer(filename, bufferSize)
+	hb, err := NewHashBuffer(filename, bufferSize, windowSize)
 	check(t, err)
 	hb.SetTesting(t)
 	defer func() {
@@ -95,7 +96,7 @@ func testGetZero(t *testing.T, hb HashBuffer, title string, amountToGet int) {
 
 func testGet(t *testing.T, hb HashBuffer, title string, amountToGet int, expected []byte) { // string may be multiple bytes / rune
 	t.Logf("starting %s", title)
-	buf, count, err := hb.Get(amountToGet)
+	buf, count, err := hb.GetWindow()
 	check(t, err)
 	expectedLength := len(expected)
 	if count != expectedLength {
