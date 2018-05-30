@@ -69,7 +69,7 @@ func TestBufferFullSizes(t *testing.T) {
 	testBufferFullSizeOfVariousLengths(t, "./testdata/onelessthanone", "TestBufferOneLessThanOneFile", 1023)
 	testBufferFullSizeOfVariousLengths(t, "./testdata/onebuffer", "TestBufferOneBufferFile", 1024)
 	testBufferFullSizeOfVariousLengths(t, "./testdata/onebufferplusone", "TestBufferOneBufferPlusOneFile", 1025)
-	testBufferFullSizeOfVariousLengths(t, "./testdata/long", "TestBufferFullSizeFile", 35538)
+	testBufferFullSizeOfVariousLengths(t, "./testdata/long", "TestBufferFullSizeFile", 35539)
 }
 
 func testBufferFullSizeOfVariousLengths(t *testing.T, filename string, title string, expectedSize int) {

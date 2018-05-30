@@ -31,7 +31,7 @@ func NewHashBuffer(filespec string, bufferSize int, windowSize int) (hashBuffer 
 	} else {
 		fhb.bufferSize = bufferSize
 	}
-	fhb.fillLevel = -1
+	fhb.fillLevel = 0
 	fhb.pointer = 0
 	fhb.buffer = make([]byte, bufferSize)
 	fhb.windowSize = windowSize
@@ -80,9 +80,9 @@ func (fhb *fileHashBuffer) GetNext() (nextByte byte, byteAvailable bool, err err
 	buffer, bytesReceived, err = fhb.GetWindow()
 	if bytesReceived > 0 {
 		return buffer[fhb.windowSize-1], true, nil
-	} else {
-		return 0, false, err
 	}
+	// else
+	return 0, false, err
 }
 
 // Close the file stream if it is not already closed.
@@ -115,12 +115,12 @@ func (fhb *fileHashBuffer) fillBuffer() (err error) {
 			// pointer is 0
 			copy(fhb.buffer[0:], fhb.buffer[fhb.pointer:fhb.pointer+fhb.windowSize-1])
 			fhb.pointer = 0
-			fhb.fillLevel = fhb.windowSize - 1 // -1 zero based, -1 drop one char of window ???
+			fhb.fillLevel = fhb.windowSize - 1 // drop one char of window
 		}
 		fhb.log("Filling buffer")
 		// beginning at the pointer, begin reading to fill as much of the buffer as we can
 		var bytesread int
-		bytesread, err = fhb.reader.Read(fhb.buffer[fhb.fillLevel+1:]) // reads up to len(buffer) bytes
+		bytesread, err = fhb.reader.Read(fhb.buffer[fhb.fillLevel:]) // reads up to len(buffer) bytes
 		if err != nil {
 			if err != io.EOF {
 				fhb.logf("Error %v", err)
@@ -137,8 +137,8 @@ func (fhb *fileHashBuffer) fillBuffer() (err error) {
 			if !fhb.windowReady {
 				fhb.windowReady = true
 				// if the whole file has already been read and it is less than the window size, adjust the windowsize
-				if fhb.fillLevel < (fhb.windowSize - 1) {
-					fhb.windowSize = fhb.fillLevel + 1
+				if fhb.fillLevel < fhb.windowSize {
+					fhb.windowSize = fhb.fillLevel
 				}
 				// w w w w w w
 				//         f
@@ -154,16 +154,18 @@ func (fhb *fileHashBuffer) fillBuffer() (err error) {
 	return
 }
 
-//         f
+// fillLevel = 1
+// window size = 1
 // p
-// w w w w w w
 // 0 1 2 3 4 5 6 7 8 9
 func (fhb *fileHashBuffer) bufferEmpty() (isEmpty bool) {
-	fhb.logf("fillLevel %d  pointer %d  windowSize %d  RHS %d  bufferEmpty %v",
+	fhb.logf("fillLevel %d  pointer %d  windowSize %d  LHS %d  RHS %d  bufferEmpty %v",
 		fhb.fillLevel, fhb.pointer, fhb.windowSize,
-		(fhb.pointer + fhb.windowSize - 1),
-		(fhb.fillLevel < (fhb.pointer + fhb.windowSize - 1)))
-	return fhb.fillLevel < (fhb.pointer + fhb.windowSize - 1)
+		(fhb.pointer + fhb.windowSize),
+		(fhb.fillLevel - 1),
+		(fhb.pointer+fhb.windowSize > fhb.fillLevel-1))
+	//	return fhb.fillLevel < (fhb.pointer + fhb.windowSize - 1)
+	return fhb.pointer+fhb.windowSize > fhb.fillLevel-1
 }
 
 //  0 < (0 + w - 1)
