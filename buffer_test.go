@@ -17,7 +17,7 @@ import (
 // {"onelessthanone", 1023},
 // {"onebuffer", 1024},
 // {"onebufferplusone", 1025},
-// {"long", 35538},
+// {"long", 35539},
 
 const bufferSize = 1024
 const windowSize = 16

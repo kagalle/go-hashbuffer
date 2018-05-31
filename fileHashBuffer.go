@@ -17,7 +17,7 @@ type fileHashBuffer struct {
 	// window holds the current window content
 	windowSize int
 	//window      []byte
-	windowReady bool // true after first read
+	// windowReady bool // true after first read
 	// optional testing object to send progress information to
 	t *testing.T // user-supplied; may be left nil
 }
@@ -36,7 +36,7 @@ func NewHashBuffer(filespec string, bufferSize int, windowSize int) (hashBuffer 
 	fhb.buffer = make([]byte, bufferSize)
 	fhb.windowSize = windowSize
 	//fhb.window = make([]byte, windowSize)
-	fhb.windowReady = false
+	// fhb.windowReady = false
 
 	f, err := os.Open(filespec) // f : *os.File which implements io.Reader
 	if err != nil {
@@ -51,14 +51,14 @@ func NewHashBuffer(filespec string, bufferSize int, windowSize int) (hashBuffer 
 // Get returns up to numberOfBytes of data as byte[], along with the number of bytes returned; if no bytes are available, return nil and 0.
 func (fhb *fileHashBuffer) GetWindow() (window []byte, windowSize int, err error) {
 	// If we need the first read or if the buffer is empty, attempt to read in more data.
-	fhb.logf("windowReady %v  bufferEmpty %v", fhb.windowReady, fhb.bufferEmpty())
-	if (!fhb.windowReady) || fhb.bufferEmpty() {
+	fhb.logf("bufferEmpty %v", fhb.bufferEmpty())
+	if fhb.bufferEmpty() {
 		err = fhb.fillBuffer()
 		if err != nil {
 			return nil, 0, err
 		}
 	}
-	if (!fhb.windowReady) || fhb.bufferEmpty() {
+	if fhb.bufferEmpty() {
 		fhb.log("out of data after an attempt to load")
 		return nil, 0, nil
 	}
@@ -75,11 +75,12 @@ func (fhb *fileHashBuffer) GetWindow() (window []byte, windowSize int, err error
 
 // GetNext returns the next available byte of data if available and true; if not available return nil and false.
 func (fhb *fileHashBuffer) GetNext() (nextByte byte, byteAvailable bool, err error) {
-	var buffer []byte
+	var window []byte
 	var bytesReceived int
-	buffer, bytesReceived, err = fhb.GetWindow()
+	window, bytesReceived, err = fhb.GetWindow()
 	if bytesReceived > 0 {
-		return buffer[fhb.windowSize-1], true, nil
+		fhb.logf("GetNext returning from %d  len %d", fhb.pointer+fhb.windowSize-1, len(fhb.buffer))
+		return window[bytesReceived-1], true, nil
 	}
 	// else
 	return 0, false, err
@@ -107,15 +108,19 @@ func (fhb *fileHashBuffer) SetTesting(t *testing.T) {
 func (fhb *fileHashBuffer) fillBuffer() (err error) {
 	if fhb.isOpen {
 		// if we reloading the buffer, we need to save the current window and then continue loading
-		if fhb.windowReady {
+		if fhb.pointer != 0 {
 			// move the window at the end, less the first character, to the beginning of the buffer
 			// read in as much as we can after that
-			fhb.log("Preparing buffer to be refilled")
+			from := fhb.pointer + 1
+			to := fhb.pointer + fhb.windowSize - 1
+			fhb.logf("Preparing buffer to be refilled  from %d:%d to 0", from, to)
 			// move buffer at pointer + 1, windowsize - 1 to 0
 			// pointer is 0
-			copy(fhb.buffer[0:], fhb.buffer[fhb.pointer:fhb.pointer+fhb.windowSize-1])
-			fhb.pointer = 0
-			fhb.fillLevel = fhb.windowSize - 1 // drop one char of window
+			if to > from {
+				copy(fhb.buffer[0:], fhb.buffer[fhb.pointer+1:fhb.pointer+fhb.windowSize-1])
+				fhb.pointer = 0
+				fhb.fillLevel = fhb.windowSize - 1 // drop one char of window
+			}
 		}
 		fhb.log("Filling buffer")
 		// beginning at the pointer, begin reading to fill as much of the buffer as we can
@@ -124,26 +129,25 @@ func (fhb *fileHashBuffer) fillBuffer() (err error) {
 		if err != nil {
 			if err != io.EOF {
 				fhb.logf("Error %v", err)
-				return
+			} else {
+				err = nil
+				fhb.log("End of file, closing:")
+				fhb.Close()
 			}
-			// else
-			err = nil
-			fhb.log("End of file, closing:")
-			fhb.Close()
 		} else {
 			// add the amount read to the fillLevel
 			fhb.fillLevel += bytesread
 			// set windowReady
-			if !fhb.windowReady {
-				fhb.windowReady = true
-				// if the whole file has already been read and it is less than the window size, adjust the windowsize
-				if fhb.fillLevel < fhb.windowSize {
-					fhb.windowSize = fhb.fillLevel
-				}
-				// w w w w w w
-				//         f
-				// 0 1 2 3 4 5 6 7 8
+			// if !fhb.windowReady {
+			// 	fhb.windowReady = true
+			// if the whole file has already been read and it is less than the window size, adjust the windowsize
+			if fhb.fillLevel < fhb.windowSize {
+				fhb.windowSize = fhb.fillLevel
 			}
+			// w w w w w w
+			//         f
+			// 0 1 2 3 4 5 6 7 8
+			// }
 			// log amount read and the fillLevel
 			fhb.logf("current fillLevel after read: %d  bytes read: %d\n",
 				fhb.fillLevel, bytesread)
@@ -162,10 +166,10 @@ func (fhb *fileHashBuffer) bufferEmpty() (isEmpty bool) {
 	fhb.logf("fillLevel %d  pointer %d  windowSize %d  LHS %d  RHS %d  bufferEmpty %v",
 		fhb.fillLevel, fhb.pointer, fhb.windowSize,
 		(fhb.pointer + fhb.windowSize),
-		(fhb.fillLevel - 1),
-		(fhb.pointer+fhb.windowSize > fhb.fillLevel-1))
+		(fhb.fillLevel),
+		(fhb.pointer+fhb.windowSize > fhb.fillLevel))
 	//	return fhb.fillLevel < (fhb.pointer + fhb.windowSize - 1)
-	return fhb.pointer+fhb.windowSize > fhb.fillLevel-1
+	return (fhb.pointer + fhb.windowSize) > fhb.fillLevel
 }
 
 //  0 < (0 + w - 1)
