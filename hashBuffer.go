@@ -16,7 +16,7 @@ type HashBuffer interface {
 	// Param []byte: buffer of window
 	// Param int: width of buffer returned; will be windowSize unless amount in file was less than windowSize
 	// Param error: non-nil if an error occurred trying to read (something other than EOF).
-	GetWindow() ([]byte, int, error)
+	GetWindow() ([]byte, error)
 	// Get next available byte of data; push this byte into the window.
 	// This is equivelant to calling GetWindow() and using the right-most byte returned.
 	// This is meant for rolling-hash algorithms that take an initial buffer of data and then additional bytes are added in.

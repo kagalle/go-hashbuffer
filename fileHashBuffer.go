@@ -50,7 +50,7 @@ func NewHashBuffer(filespec string, bufferSize int, windowSize int) (hashBuffer 
 }
 
 // Get returns up to numberOfBytes of data as byte[], along with the number of bytes returned; if no bytes are available, return nil and 0.
-func (fhb *fileHashBuffer) GetWindow() (window []byte, windowSize int, err error) {
+func (fhb *fileHashBuffer) GetWindow() (window []byte, err error) {
 	// If we need the first read or if the buffer is empty, attempt to read in more data.
 	fhb.logf("GetWindow() starting;  bufferEmpty %v", fhb.bufferEmpty())
 	if fhb.bufferEmpty() {
@@ -68,7 +68,6 @@ func (fhb *fileHashBuffer) GetWindow() (window []byte, windowSize int, err error
 	start := fhb.pointer
 	end := fhb.pointer + fhb.windowSize
 	window = fhb.buffer[start:end]
-	windowSize = fhb.windowSize
 	// After getting start and end, advance the pointer.
 	fhb.pointer++
 	fhb.logf("start %d  end %d  len %d", start, end, len(fhb.buffer))
@@ -79,8 +78,8 @@ func (fhb *fileHashBuffer) GetWindow() (window []byte, windowSize int, err error
 // GetNext returns the next available byte of data if available and true; if not available return nil and false.
 func (fhb *fileHashBuffer) GetNext() (nextByte byte, byteAvailable bool, err error) {
 	var window []byte
-	var bytesReceived int
-	window, bytesReceived, err = fhb.GetWindow()
+	window, err = fhb.GetWindow()
+	bytesReceived := len(window)
 	if bytesReceived > 0 {
 		nextByte = window[bytesReceived-1]
 		byteAvailable = true

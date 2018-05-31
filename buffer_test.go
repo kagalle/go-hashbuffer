@@ -32,8 +32,8 @@ func TestBufferEmptyFileWithGet(t *testing.T) {
 		err := hb.Close()
 		check(t, err)
 	}()
-	testGetZero(t, hb, "TestBufferEmptyFileWithGet first round", 16)
-	testGetZero(t, hb, "TestBufferEmptyFileWithGet second round", 16)
+	testGetZero(t, hb, "TestBufferEmptyFileWithGet first round")
+	testGetZero(t, hb, "TestBufferEmptyFileWithGet second round")
 	testGetNextZero(t, hb, "TestBufferEmptyFileWithGet third round")
 }
 
@@ -61,18 +61,39 @@ func TestBufferOneByteFileWithGet(t *testing.T) {
 		err := hb.Close()
 		check(t, err)
 	}()
-	testGet(t, hb, "TestBufferOneByteFileWithGet - Get round", 16, testData[0:1])
+	testGet(t, hb, "TestBufferOneByteFileWithGet - first round", testData[0:1])
+	testGetZero(t, hb, "TestBufferOneByteFileWithGet second round")
+}
+
+func TestBufferOneByteFileWithGetNext(t *testing.T) {
+	t.Log("start TestBufferOneByteFileWithGetNext")
+	hb, err := NewHashBuffer("./testdata/onebyte", bufferSize, windowSize)
+	check(t, err)
+	hb.SetTesting(t)
+	defer func() {
+		t.Log("Closing")
+		err := hb.Close()
+		check(t, err)
+	}()
+	testGet(t, hb, "TestBufferOneByteFileWithGet - Get round", testData[0:1])
 	testGetNextZero(t, hb, "TestBufferOneByteFileWithGet - GetNext round")
 }
 
-func TestBufferFullSizes(t *testing.T) {
-	testBufferFullSizeOfVariousLengths(t, "./testdata/onelessthanone", "TestBufferOneLessThanOneFile", 1023)
-	testBufferFullSizeOfVariousLengths(t, "./testdata/onebuffer", "TestBufferOneBufferFile", 1024)
-	testBufferFullSizeOfVariousLengths(t, "./testdata/onebufferplusone", "TestBufferOneBufferPlusOneFile", 1025)
-	testBufferFullSizeOfVariousLengths(t, "./testdata/long", "TestBufferFullSizeFile", 35539)
+func TestBufferFullSizesWithGetNext(t *testing.T) {
+	testBufferFullSizeOfVariousLengthsWithGetNext(t, "./testdata/onelessthanone", "TestBufferOneLessThanOneFile", 1023)
+	testBufferFullSizeOfVariousLengthsWithGetNext(t, "./testdata/onebuffer", "TestBufferOneBufferFile", 1024)
+	testBufferFullSizeOfVariousLengthsWithGetNext(t, "./testdata/onebufferplusone", "TestBufferOneBufferPlusOneFile", 1025)
+	testBufferFullSizeOfVariousLengthsWithGetNext(t, "./testdata/long", "TestBufferFullSizeFile", 35539)
 }
 
-func testBufferFullSizeOfVariousLengths(t *testing.T, filename string, title string, expectedSize int) {
+func TestBufferFullSizesWithGet(t *testing.T) {
+	testBufferFullSizeOfVariousLengthsWithGet(t, "./testdata/onelessthanone", "TestBufferOneLessThanOneFile", 1023)
+	testBufferFullSizeOfVariousLengthsWithGet(t, "./testdata/onebuffer", "TestBufferOneBufferFile", 1024)
+	testBufferFullSizeOfVariousLengthsWithGet(t, "./testdata/onebufferplusone", "TestBufferOneBufferPlusOneFile", 1025)
+	testBufferFullSizeOfVariousLengthsWithGet(t, "./testdata/long", "TestBufferFullSizeFile", 35539)
+}
+
+func testBufferFullSizeOfVariousLengthsWithGetNext(t *testing.T, filename string, title string, expectedSize int) {
 	t.Logf("start %s", title)
 	hb, err := NewHashBuffer(filename, bufferSize, windowSize)
 	check(t, err)
@@ -82,7 +103,7 @@ func testBufferFullSizeOfVariousLengths(t *testing.T, filename string, title str
 		err := hb.Close()
 		check(t, err)
 	}()
-	testGet(t, hb, fmt.Sprintf("%s first round", title), 16, testData[0:16])
+	testGet(t, hb, fmt.Sprintf("%s first round", title), testData[0:16])
 	for i := 16; i <= (expectedSize - 1); i++ {
 		outByte, ok := testGetNextOne(t, hb, fmt.Sprintf("%s second round", title), testData[i])
 		t.Logf("index %d  val %#x (%s)  ok %t", i, outByte, string(outByte), ok)
@@ -90,32 +111,47 @@ func testBufferFullSizeOfVariousLengths(t *testing.T, filename string, title str
 	testGetNextZero(t, hb, fmt.Sprintf("%s third round", title))
 }
 
-func testGetZero(t *testing.T, hb HashBuffer, title string, amountToGet int) {
-	testGet(t, hb, title, amountToGet, []byte{})
+func testBufferFullSizeOfVariousLengthsWithGet(t *testing.T, filename string, title string, expectedSize int) {
+	t.Logf("start %s", title)
+	hb, err := NewHashBuffer(filename, bufferSize, windowSize)
+	check(t, err)
+	hb.SetTesting(t)
+	defer func() {
+		t.Log("Closing")
+		err := hb.Close()
+		check(t, err)
+	}()
+	// TODO: not yet rewritten to use GetWindow()
+	testGet(t, hb, fmt.Sprintf("%s first round", title), testData[0:16])
+	for i := 16; i <= (expectedSize - 1); i++ {
+		outByte, ok := testGetNextOne(t, hb, fmt.Sprintf("%s second round", title), testData[i])
+		t.Logf("index %d  val %#x (%s)  ok %t", i, outByte, string(outByte), ok)
+	}
+	testGetNextZero(t, hb, fmt.Sprintf("%s third round", title))
 }
 
-func testGet(t *testing.T, hb HashBuffer, title string, amountToGet int, expected []byte) { // string may be multiple bytes / rune
+func testGetZero(t *testing.T, hb HashBuffer, title string) {
+	testGet(t, hb, title, []byte{})
+}
+
+func testGet(t *testing.T, hb HashBuffer, title string, expected []byte) { // string may be multiple bytes / rune
 	t.Logf("starting %s", title)
-	buf, count, err := hb.GetWindow()
+	buf, err := hb.GetWindow()
+	count := len(buf)
 	check(t, err)
 	expectedLength := len(expected)
 	if count != expectedLength {
 		t.Errorf("Error %s :got count=%d, want %d", title, count, expectedLength)
 	}
-	if amountToGet == 0 {
+	if expectedLength == 0 {
 		if buf != nil {
 			t.Errorf("Error %s: got buf[] with length=%d, want buf == nil", title, len(buf))
 		}
 	} else {
-		len := len(buf)
-		if len != expectedLength {
-			t.Errorf("Error %s: got length=%d, want %d", title, len, expectedLength)
-		} else {
-			for index, element := range expected {
-				if element != buf[index] {
-					t.Errorf("Error %s: unexpected value %#x (%s), want %#x (%s)", title, buf[index], string(buf[index]), element, string(element))
-					break
-				}
+		for index, element := range expected {
+			if element != buf[index] {
+				t.Errorf("Error %s: unexpected value %#x (%s), want %#x (%s)", title, buf[index], string(buf[index]), element, string(element))
+				break
 			}
 		}
 	}
