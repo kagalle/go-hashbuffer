@@ -80,17 +80,17 @@ func TestBufferOneByteFileWithGetNext(t *testing.T) {
 }
 
 func TestBufferFullSizesWithGetNext(t *testing.T) {
-	testBufferFullSizeOfVariousLengthsWithGetNext(t, "./testdata/onelessthanone", "TestBufferOneLessThanOneFile", 1023)
-	testBufferFullSizeOfVariousLengthsWithGetNext(t, "./testdata/onebuffer", "TestBufferOneBufferFile", 1024)
-	testBufferFullSizeOfVariousLengthsWithGetNext(t, "./testdata/onebufferplusone", "TestBufferOneBufferPlusOneFile", 1025)
-	testBufferFullSizeOfVariousLengthsWithGetNext(t, "./testdata/long", "TestBufferFullSizeFile", 35539)
+	testBufferFullSizeOfVariousLengthsWithGetNext(t, "./testdata/onelessthanone", "TestBufferOneLessThanOneFile_GetNext", 1023)
+	testBufferFullSizeOfVariousLengthsWithGetNext(t, "./testdata/onebuffer", "TestBufferOneBufferFile_GetNext", 1024)
+	testBufferFullSizeOfVariousLengthsWithGetNext(t, "./testdata/onebufferplusone", "TestBufferOneBufferPlusOneFile_GetNext", 1025)
+	testBufferFullSizeOfVariousLengthsWithGetNext(t, "./testdata/long", "TestBufferFullSizeFile_GetNext", 35539)
 }
 
 func TestBufferFullSizesWithGet(t *testing.T) {
-	testBufferFullSizeOfVariousLengthsWithGet(t, "./testdata/onelessthanone", "TestBufferOneLessThanOneFile", 1023)
-	testBufferFullSizeOfVariousLengthsWithGet(t, "./testdata/onebuffer", "TestBufferOneBufferFile", 1024)
-	testBufferFullSizeOfVariousLengthsWithGet(t, "./testdata/onebufferplusone", "TestBufferOneBufferPlusOneFile", 1025)
-	testBufferFullSizeOfVariousLengthsWithGet(t, "./testdata/long", "TestBufferFullSizeFile", 35539)
+	testBufferFullSizeOfVariousLengthsWithGet(t, "./testdata/onelessthanone", "TestBufferOneLessThanOneFile_Get", 1023)
+	testBufferFullSizeOfVariousLengthsWithGet(t, "./testdata/onebuffer", "TestBufferOneBufferFile_Get", 1024)
+	testBufferFullSizeOfVariousLengthsWithGet(t, "./testdata/onebufferplusone", "TestBufferOneBufferPlusOneFile_Get", 1025)
+	testBufferFullSizeOfVariousLengthsWithGet(t, "./testdata/long", "TestBufferFullSizeFile_Get", 35539)
 }
 
 func testBufferFullSizeOfVariousLengthsWithGetNext(t *testing.T, filename string, title string, expectedSize int) {
@@ -100,10 +100,11 @@ func testBufferFullSizeOfVariousLengthsWithGetNext(t *testing.T, filename string
 	hb.SetTesting(t)
 	defer func() {
 		t.Log("Closing")
-		err := hb.Close()
+		err = hb.Close()
 		check(t, err)
 	}()
-	testGet(t, hb, fmt.Sprintf("%s first round", title), testData[0:16])
+	buf := testGet(t, hb, fmt.Sprintf("%s first round", title), testData[0:16])
+	t.Logf("index %d  val %#x (%s)", 0, buf, string(buf))
 	for i := 16; i <= (expectedSize - 1); i++ {
 		outByte, ok := testGetNextOne(t, hb, fmt.Sprintf("%s second round", title), testData[i])
 		t.Logf("index %d  val %#x (%s)  ok %t", i, outByte, string(outByte), ok)
@@ -118,14 +119,14 @@ func testBufferFullSizeOfVariousLengthsWithGet(t *testing.T, filename string, ti
 	hb.SetTesting(t)
 	defer func() {
 		t.Log("Closing")
-		err := hb.Close()
+		err = hb.Close()
 		check(t, err)
 	}()
-	// TODO: not yet rewritten to use GetWindow()
-	testGet(t, hb, fmt.Sprintf("%s first round", title), testData[0:16])
+	buf := testGet(t, hb, fmt.Sprintf("%s first round", title), testData[0:16])
+	t.Logf("index %d  val %#x (%s)", 0, buf, string(buf))
 	for i := 16; i <= (expectedSize - 1); i++ {
-		outByte, ok := testGetNextOne(t, hb, fmt.Sprintf("%s second round", title), testData[i])
-		t.Logf("index %d  val %#x (%s)  ok %t", i, outByte, string(outByte), ok)
+		buf = testGet(t, hb, fmt.Sprintf("%s second round", title), testData[i-16+1:i+1])
+		t.Logf("index %d  val %#x (%s)", i, buf, string(buf))
 	}
 	testGetNextZero(t, hb, fmt.Sprintf("%s third round", title))
 }
@@ -134,9 +135,10 @@ func testGetZero(t *testing.T, hb HashBuffer, title string) {
 	testGet(t, hb, title, []byte{})
 }
 
-func testGet(t *testing.T, hb HashBuffer, title string, expected []byte) { // string may be multiple bytes / rune
+func testGet(t *testing.T, hb HashBuffer, title string, expected []byte) (buf []byte) { // string may be multiple bytes / rune
 	t.Logf("starting %s", title)
-	buf, err := hb.GetWindow()
+	var err error
+	buf, err = hb.GetWindow()
 	count := len(buf)
 	check(t, err)
 	expectedLength := len(expected)
@@ -155,7 +157,9 @@ func testGet(t *testing.T, hb HashBuffer, title string, expected []byte) { // st
 			}
 		}
 	}
+	return
 }
+
 func testGetNextZero(t *testing.T, hb HashBuffer, title string) (byte, bool) {
 	return testGetNext(t, hb, title, false, 0)
 }
