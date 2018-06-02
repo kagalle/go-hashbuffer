@@ -116,7 +116,7 @@ func (fhb *fileHashBuffer) fillBuffer() (err error) {
 			to := fhb.pointer + fhb.windowSize - 1
 			fhb.logf("Preparing buffer to be refilled  from %d:%d to 0", from, to)
 			if to > from {
-				copy(fhb.buffer[0:], fhb.buffer[fhb.pointer+1:fhb.pointer+fhb.windowSize-1])
+				copy(fhb.buffer[0:], fhb.buffer[fhb.pointer:fhb.pointer+fhb.windowSize-1])
 				fhb.pointer = 0
 				fhb.fillLevel = fhb.windowSize - 1 // drop one char of window
 			}
