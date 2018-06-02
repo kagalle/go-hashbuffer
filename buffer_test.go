@@ -17,11 +17,11 @@ import (
 // {"data_1025", 1025},
 // {"data_long", 35539},
 
-const bufferSize = 1024
-const windowSize = 16
-
 // Make sure calling GetWindow() on an empty file works as expected.
 func TestBufferEmptyFileWithGet(t *testing.T) {
+	const bufferSize = 1024
+	const windowSize = 16
+
 	t.Log("start TestData_0_WithGet")
 	hb, err := NewHashBuffer("./testdata/data_0", bufferSize, windowSize)
 	check(t, err)
@@ -38,6 +38,9 @@ func TestBufferEmptyFileWithGet(t *testing.T) {
 
 // Make sure calling GetNext() on an empty file works as expected.
 func TestBufferEmptyFileWithGetNext(t *testing.T) {
+	const bufferSize = 1024
+	const windowSize = 16
+
 	t.Log("start TestData_0_WithGetNext")
 	hb, err := NewHashBuffer("./testdata/data_0", bufferSize, windowSize)
 	check(t, err)
@@ -53,6 +56,9 @@ func TestBufferEmptyFileWithGetNext(t *testing.T) {
 
 // Make sure calling GetWindow() on a 1-byte file works as expected.
 func TestBufferOneByteFileWithGet(t *testing.T) {
+	const bufferSize = 1024
+	const windowSize = 16
+
 	t.Log("start TestData_1_WithGet")
 	hb, err := NewHashBuffer("./testdata/data_1", bufferSize, windowSize)
 	check(t, err)
@@ -68,6 +74,9 @@ func TestBufferOneByteFileWithGet(t *testing.T) {
 
 // Make sure calling GetNext() on a 1-byte file works as expected.
 func TestBufferOneByteFileWithGetNext(t *testing.T) {
+	const bufferSize = 1024
+	const windowSize = 16
+
 	t.Log("start TestData_1_WithGetNext")
 	hb, err := NewHashBuffer("./testdata/data_1", bufferSize, windowSize)
 	check(t, err)
@@ -126,6 +135,9 @@ func TestCompareReadToFileWithGet(t *testing.T) {
 }
 
 func testBufferFullSizeOfVariousLengthsWithGetNext(t *testing.T, filename string, title string, expectedSize int) {
+	const bufferSize = 1024
+	const windowSize = 16
+
 	t.Logf("start %s", title)
 	hb, err := NewHashBuffer(filename, bufferSize, windowSize)
 	check(t, err)
@@ -145,6 +157,9 @@ func testBufferFullSizeOfVariousLengthsWithGetNext(t *testing.T, filename string
 }
 
 func testBufferFullSizeOfVariousLengthsWithGet(t *testing.T, filename string, title string, expectedSize int) {
+	const bufferSize = 1024
+	const windowSize = 16
+
 	t.Logf("start %s", title)
 	hb, err := NewHashBuffer(filename, bufferSize, windowSize)
 	check(t, err)
@@ -164,6 +179,9 @@ func testBufferFullSizeOfVariousLengthsWithGet(t *testing.T, filename string, ti
 }
 
 func testCompareReadToFileOfVariousLengthsWithGetNext(t *testing.T, filename string, title string, expectedSize int) {
+	const bufferSize = 1024
+	const windowSize = 16
+
 	t.Logf("start %s", title)
 	compareBuffer := make([]byte, expectedSize)
 	hb, err := NewHashBuffer(filename, bufferSize, windowSize)
@@ -192,6 +210,9 @@ func testCompareReadToFileOfVariousLengthsWithGetNext(t *testing.T, filename str
 }
 
 func testCompareReadToFileOfVariousLengthsWithGet(t *testing.T, filename string, title string, expectedSize int) {
+	const bufferSize = 1024
+	const windowSize = 16
+
 	t.Logf("start %s", title)
 	compareBuffer := make([]byte, expectedSize)
 	hb, err := NewHashBuffer(filename, bufferSize, windowSize)
