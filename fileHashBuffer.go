@@ -71,7 +71,7 @@ func (fhb *fileHashBuffer) GetWindow() (window []byte, err error) {
 	// After getting start and end, advance the pointer.
 	fhb.pointer++
 	fhb.logf("start %d  end %d  len %d", start, end, len(fhb.buffer))
-	fhb.logf("val %#x", window)
+	fhb.logf("val %#x (%s)", window, string(window))
 	return
 }
 
