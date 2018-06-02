@@ -1,7 +1,7 @@
 package hashbuffer
 
 import (
-	"crypto/sha256"
+	"crypto/md5"
 	"testing"
 
 	"github.com/chmduquesne/rollinghash"
@@ -93,7 +93,7 @@ func TestStandardHash(t *testing.T) {
 
 		if len(window) > 0 {
 			// output the hash value for the current word
-			t.Log(sha256.Sum256(window))
+			t.Log(md5.Sum(window))
 		} else {
 			// we reached the end of the file
 			dataAvailable = false
