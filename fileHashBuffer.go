@@ -56,11 +56,11 @@ func (fhb *fileHashBuffer) GetWindow() (window []byte, err error) {
 	if fhb.bufferEmpty() {
 		err = fhb.fillBuffer()
 		if err != nil {
-			fhb.logf("fillBuffer err %v", err)
+			fhb.logf("GetWindow(): fillBuffer err %v", err)
 			return
 		}
 		if fhb.bufferEmpty() {
-			fhb.log("out of data after an attempt to load")
+			fhb.log("GetWindow(): out of data after an attempt to load")
 			return
 		}
 	}
@@ -85,6 +85,29 @@ func (fhb *fileHashBuffer) GetNext() (nextByte byte, byteAvailable bool, err err
 		byteAvailable = true
 		fhb.logf("GetNext returning from %d  len %d", fhb.pointer+fhb.windowSize-1, len(fhb.buffer))
 	}
+	return
+}
+
+func (fhb *fileHashBuffer) Skip(count int) (numberSkipped int, err error) {
+	// determine if there is not enough in the buffer currently to skip over
+	if (fhb.pointer + fhb.windowSize + count) > fhb.fillLevel {
+		// attempt to fill buffer
+		err = fhb.fillBuffer()
+		if err != nil {
+			fhb.logf("Skip(): fillBuffer err %v", err)
+			return
+		}
+	}
+	// check again, this time calculating the amount available to skip
+	amountAvailableToSkip := fhb.fillLevel - fhb.pointer + fhb.windowSize
+	// reduce the amount to skip to the max amount we have available
+	if amountAvailableToSkip < count {
+		numberSkipped = amountAvailableToSkip
+	} else {
+		numberSkipped = count
+	}
+	// advance the pointer by that amount
+	fhb.pointer = fhb.pointer + numberSkipped
 	return
 }
 

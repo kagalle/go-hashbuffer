@@ -134,6 +134,78 @@ func TestCompareReadToFileWithGet(t *testing.T) {
 	testCompareReadToFileOfVariousLengthsWithGet(t, "./testdata/data_long", "TestData_long_WithGet", 35539)
 }
 
+// Basic test for Skip()
+func TestSkip(t *testing.T) {
+	const bufferSize = 1024
+	const windowSize = 16
+	const title = "TestSkip"
+
+	t.Logf("start %s", title)
+	hb, err := NewHashBuffer("./testdata/data_15", bufferSize, windowSize)
+	check(t, err)
+	hb.SetTesting(t)
+	defer func() {
+		t.Log("Closing")
+		err := hb.Close()
+		check(t, err)
+	}()
+	skipped, err := hb.Skip(1)
+	check(t, err)
+	if skipped != 1 {
+		t.Errorf("Error TestSkip: skipped %d, should have skipped 1", skipped)
+	}
+	testGet(t, hb, title, testData, 1)
+	testGetZero(t, hb, title)
+}
+
+// Test that Skip() work correctly with a buffer fill needed
+func TestSkipWithBufferFill(t *testing.T) {
+	const bufferSize = 1024
+	const windowSize = 16
+	const title = "TestSkipWithBufferFill"
+
+	t.Logf("start %s", title)
+	hb, err := NewHashBuffer("./testdata/data_1025", bufferSize, windowSize)
+	check(t, err)
+	hb.SetTesting(t)
+	defer func() {
+		t.Log("Closing")
+		err := hb.Close()
+		check(t, err)
+	}()
+	skipped, err := hb.Skip(1009)
+	check(t, err)
+	if skipped != 1009 {
+		t.Errorf("Error TestSkipWithBufferFill: skipped %d, should have skipped 1009", skipped)
+	}
+	testGet(t, hb, title, testData, 1009)
+	testGetZero(t, hb, title)
+}
+
+// Test Skip() past data
+func TestSkipPastEOF(t *testing.T) {
+	const bufferSize = 1024
+	const windowSize = 16
+	const title = "TestSkipPastEOF"
+
+	t.Logf("start %s", title)
+	hb, err := NewHashBuffer("./testdata/data_1025", bufferSize, windowSize)
+	check(t, err)
+	hb.SetTesting(t)
+	defer func() {
+		t.Log("Closing")
+		err := hb.Close()
+		check(t, err)
+	}()
+	skipped, err := hb.Skip(1010)
+	check(t, err)
+	if skipped != 1009 {
+		t.Errorf("Error TestSkipPastEOF: skipped %d, should have skipped 1009", skipped)
+	}
+	testGet(t, hb, title, testData, 1009)
+	testGetZero(t, hb, title)
+}
+
 func testBufferFullSizeOfVariousLengthsWithGetNext(t *testing.T, filename string, title string, expectedSize int) {
 	const bufferSize = 1024
 	const windowSize = 16
