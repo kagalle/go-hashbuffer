@@ -94,20 +94,49 @@ func (fhb *fileHashBuffer) Skip(count int) (numberSkipped int, err error) {
 		// attempt to fill buffer
 		err = fhb.fillBuffer()
 		if err != nil {
-			fhb.logf("Skip(): fillBuffer err %v", err)
+			fhb.logf("Skip(): initial fillBuffer err %v", err)
+			return
+		}
+		if fhb.bufferEmpty() {
+			fhb.log("Skip(): out of data after an attempt to load")
 			return
 		}
 	}
-	// check again, this time calculating the amount available to skip
-	amountAvailableToSkip := fhb.fillLevel - fhb.pointer + fhb.windowSize
+	// calculate the amount available to skip
+	amountAvailableToSkip := fhb.fillLevel - (fhb.pointer + fhb.windowSize)
+	fhb.logf("amountAvailableToSkip=%d", amountAvailableToSkip)
 	// reduce the amount to skip to the max amount we have available
+	if amountAvailableToSkip <= 0 {
+		numberSkipped = 0
+		return
+	}
 	if amountAvailableToSkip < count {
 		numberSkipped = amountAvailableToSkip
 	} else {
 		numberSkipped = count
 	}
+	fhb.logf("numberSkipped=%d", numberSkipped)
 	// advance the pointer by that amount
 	fhb.pointer = fhb.pointer + numberSkipped
+	fhb.logf("recurse=%v", ((!fhb.bufferEmpty()) && (numberSkipped < count)))
+	if (!fhb.bufferEmpty()) && (numberSkipped < count) {
+		// attempt to fill buffer
+		err = fhb.fillBuffer()
+		if err != nil {
+			fhb.logf("Skip(): fillBuffer err %v", err)
+			return
+		}
+		// make the call again until either we reach count,
+		// or we run out of data
+		childCount := count - numberSkipped
+		var childSkipped int
+		fhb.logf("childCount=%d", childCount)
+		childSkipped, err = fhb.Skip(childCount)
+		if err != nil {
+			fhb.logf("Skip(): child Skip() err %v", err)
+		}
+		numberSkipped += childSkipped
+	}
 	return
 }
 
@@ -150,12 +179,12 @@ func (fhb *fileHashBuffer) fillBuffer() (err error) {
 		bytesread, err = fhb.reader.Read(fhb.buffer[fhb.fillLevel:])
 		if err != nil {
 			if err != io.EOF {
-				fhb.logf("Error %v", err)
+				fhb.logf("Error %v, closing", err)
 			} else {
 				err = nil
 				fhb.log("End of file, closing:")
-				fhb.Close()
 			}
+			fhb.Close()
 		} else {
 			// add the amount read to the fillLevel
 			fhb.fillLevel += bytesread
@@ -190,5 +219,6 @@ func (fhb *fileHashBuffer) log(message string) {
 func (fhb *fileHashBuffer) logf(format string, args ...interface{}) {
 	if fhb.t != nil {
 		fhb.t.Logf(format, args...)
+		// fmt.Printf(format+"\n", args...)
 	}
 }

@@ -141,7 +141,7 @@ func TestSkip(t *testing.T) {
 	const title = "TestSkip"
 
 	t.Logf("start %s", title)
-	hb, err := NewHashBuffer("./testdata/data_15", bufferSize, windowSize)
+	hb, err := NewHashBuffer("./testdata/data_17", bufferSize, windowSize)
 	check(t, err)
 	hb.SetTesting(t)
 	defer func() {
