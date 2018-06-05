@@ -364,6 +364,7 @@ func testGetNext(t *testing.T, hb HashBuffer, title string, byteExpectedInReturn
 }
 
 func check(t *testing.T, err error) {
+	t.Helper()
 	if err != nil {
 		t.Errorf("Error %v", err)
 		panic(err)

@@ -51,6 +51,7 @@ func NewHashBuffer(filespec string, bufferSize int, windowSize int) (hashBuffer 
 
 // Get returns up to numberOfBytes of data as byte[], along with the number of bytes returned; if no bytes are available, return nil and 0.
 func (fhb *fileHashBuffer) GetWindow() (window []byte, err error) {
+	// if fhb.isOpen {
 	// If we need the first read or if the buffer is empty, attempt to read in more data.
 	fhb.logf("GetWindow() starting;  bufferEmpty %v", fhb.bufferEmpty())
 	if fhb.bufferEmpty() {
@@ -72,6 +73,7 @@ func (fhb *fileHashBuffer) GetWindow() (window []byte, err error) {
 	fhb.pointer++
 	fhb.logf("start %d  end %d  len %d", start, end, len(fhb.buffer))
 	fhb.logf("val %#x (%s)", window, string(window))
+	// }
 	return
 }
 
@@ -89,6 +91,7 @@ func (fhb *fileHashBuffer) GetNext() (nextByte byte, byteAvailable bool, err err
 }
 
 func (fhb *fileHashBuffer) Skip(count int) (numberSkipped int, err error) {
+	// if fhb.isOpen {
 	// determine if there is not enough in the buffer currently to skip over
 	if (fhb.pointer + fhb.windowSize + count) > fhb.fillLevel {
 		// attempt to fill buffer
@@ -121,11 +124,11 @@ func (fhb *fileHashBuffer) Skip(count int) (numberSkipped int, err error) {
 	fhb.logf("recurse=%v", ((!fhb.bufferEmpty()) && (numberSkipped < count)))
 	if (!fhb.bufferEmpty()) && (numberSkipped < count) {
 		// attempt to fill buffer
-		err = fhb.fillBuffer()
-		if err != nil {
-			fhb.logf("Skip(): fillBuffer err %v", err)
-			return
-		}
+		// err = fhb.fillBuffer()
+		// if err != nil {
+		// 	fhb.logf("Skip(): fillBuffer err %v", err)
+		// 	return
+		// }
 		// make the call again until either we reach count,
 		// or we run out of data
 		childCount := count - numberSkipped
@@ -137,6 +140,7 @@ func (fhb *fileHashBuffer) Skip(count int) (numberSkipped int, err error) {
 		}
 		numberSkipped += childSkipped
 	}
+	// }
 	return
 }
 
@@ -156,21 +160,21 @@ func (fhb *fileHashBuffer) SetTesting(t *testing.T) {
 	fhb.t = t
 }
 
-// Since we know we are reading and using one byte at a time after the initial read,
-// we can assume that when this gets called, we can clear and reload the entire buffer.
 func (fhb *fileHashBuffer) fillBuffer() (err error) {
 	if fhb.isOpen {
 		// if we reloading the buffer, we need to save the current window and then continue loading
 		if fhb.pointer != 0 {
-			// move the window at the end, less the first character, to the beginning of the buffer
+			// move the window at the end, to the beginning of the buffer
 			// read in as much as we can after that
-			from := fhb.pointer + 1
-			to := fhb.pointer + fhb.windowSize - 1
-			fhb.logf("Preparing buffer to be refilled  from %d:%d to 0", from, to)
+			from := fhb.pointer
+			to := fhb.fillLevel
+			fhb.logf("Preparing buffer to be refilled  from %d (pointer):%d (fillLevel)  to 0  -  new fillLevel %d",
+				from, to, (fhb.fillLevel - fhb.pointer))
 			if to > from {
-				copy(fhb.buffer[0:], fhb.buffer[fhb.pointer:fhb.pointer+fhb.windowSize-1])
+				copy(fhb.buffer[0:], fhb.buffer[from:to])
+				fhb.fillLevel = fhb.fillLevel - fhb.pointer
 				fhb.pointer = 0
-				fhb.fillLevel = fhb.windowSize - 1 // drop one char of window
+				fhb.logf("new fillLevel %d", fhb.fillLevel)
 			}
 		}
 		fhb.log("Filling buffer")
@@ -182,7 +186,7 @@ func (fhb *fileHashBuffer) fillBuffer() (err error) {
 				fhb.logf("Error %v, closing", err)
 			} else {
 				err = nil
-				fhb.log("End of file, closing:")
+				fhb.log("End of file, closing")
 			}
 			fhb.Close()
 		} else {
@@ -212,11 +216,13 @@ func (fhb *fileHashBuffer) bufferEmpty() bool {
 }
 
 func (fhb *fileHashBuffer) log(message string) {
+	fhb.t.Helper()
 	if fhb.t != nil {
 		fhb.t.Log(message)
 	}
 }
 func (fhb *fileHashBuffer) logf(format string, args ...interface{}) {
+	fhb.t.Helper()
 	if fhb.t != nil {
 		fhb.t.Logf(format, args...)
 		// fmt.Printf(format+"\n", args...)
