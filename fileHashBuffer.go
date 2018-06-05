@@ -216,14 +216,14 @@ func (fhb *fileHashBuffer) bufferEmpty() bool {
 }
 
 func (fhb *fileHashBuffer) log(message string) {
-	fhb.t.Helper()
 	if fhb.t != nil {
+		fhb.t.Helper()
 		fhb.t.Log(message)
 	}
 }
 func (fhb *fileHashBuffer) logf(format string, args ...interface{}) {
-	fhb.t.Helper()
 	if fhb.t != nil {
+		fhb.t.Helper()
 		fhb.t.Logf(format, args...)
 		// fmt.Printf(format+"\n", args...)
 	}
