@@ -1,6 +1,8 @@
 # hashbuffer
 
-Hashbuffer is a buffer designed to feed data (normally a file) to a hashing algorithm in a way that the input is broken up into fixed sized windows (also referred to as words), each of which is later hashed.  The output window starts at the beginning and moves forward one byte at a time.  If the windowSize is 16, then the first window returned would be bytes 0-15, the second, bytes 1-16, etc.
+Hashbuffer is a buffer designed to feed data (normally a file) to a hashing algorithm in a way that the input is broken up into fixed sized windows (also referred to as words), each of which is later hashed.  The output window starts at the beginning and moves forward one byte at a time.  If the windowSize is 16, then the first window returned would be bytes 0-15, the second, bytes 1-16, etc.  
+
+However, the `Skip()` method can be used to skip over any amount of input. So, `GetWindow()` followed by `Skip(5)` followed by `GetWindow()` would result in the first window of bytes 0-15, and a second window of bytes 6-21.
 
 This can be used with a rolling hash, such as can be found at [chmduquesne/rollinghash](http://github.com/chmduquesne/rollinghash).  It can also be used with a standard hash, such as MD-5, etc.  Note that more complex hash algorithms generate wider hashes; there is little point in creating a hash of something when the checksum created is larger than the input.
 
@@ -31,12 +33,14 @@ hb, err := NewHashBuffer(filespec, bufferSize, windowSize)
 
 The `HashBuffer` interface defines the available operations and `FileHashBuffer` provides a file-based implementation.
 
-`NewHashBuffer()` creates a `FileHashBuffer` from a specified file name and the size of buffer to be used. The buffer can be any reasonable size larger than the window size.  This opens the file.  Your code should call, or defer a call, to `Close()`.
+`NewHashBuffer()` creates a `FileHashBuffer` from a specified file name and the size of buffer to be used. The buffer can be any reasonable size larger than the window size.  This opens the file.  Your code should call, or defer a call, to `Close()`, although if the file is read completely, `Close()` is automatically called; calling it more than once is not an error.
 
-`Close()` closes the associated file and the hashbuffer.
+`Close()` closes the associated file and the Hashbuffer.
 
 `GetWindow()` retrieves a slice of bytes of up to the specified length, which is the window length.  If called repeatedly, it returns the next slice, one byte further in the stream, as described above.
 
 `GetNext()` retrieves the next available byte.  It returns the byte and true to indicate success, or 0 and false if no byte is available; or an error.
+
+`Skip(n)` skips over the next `n` bytes of input.  It returns the number actually skipped; or an error.
 
 `SetTesting()` allows for logging to be sent when testing HashBuffer.  The output is available if the test is run in verbose mode (`go test -v`).
