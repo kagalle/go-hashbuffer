@@ -6,7 +6,8 @@ import (
 
 /*
  * Implementations:
- *   fileHashBuffer.go : NewHashBuffer(filespec string, bufferSize int) (HashBuffer, error)
+ * 	fileHashBuffer.go :
+ *		NewFileHashBuffer(filespec string, bufferSize int, windowSize int) (hashBuffer HashBuffer, err error)
  *
  */
 

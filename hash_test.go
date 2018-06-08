@@ -20,7 +20,7 @@ func TestRollingHash(t *testing.T) {
 	const filespec = "testdata/data_1025"
 
 	// Get data
-	hb, err := NewHashBuffer(filespec, bufferSize, windowSize)
+	hb, err := NewFileHashBuffer(filespec, bufferSize, windowSize)
 	if err != nil {
 		panic(err)
 	}
@@ -76,7 +76,7 @@ func TestStandardHash(t *testing.T) {
 	const filespec = "testdata/data_1025"
 
 	// Get data
-	hb, err := NewHashBuffer(filespec, bufferSize, windowSize)
+	hb, err := NewFileHashBuffer(filespec, bufferSize, windowSize)
 	if err != nil {
 		panic(err)
 	}

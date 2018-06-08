@@ -9,7 +9,7 @@ This can be used with a rolling hash, such as can be found at [chmduquesne/rolli
 A rolling hash is an algorithm that generates checksums of a sliding window over a long array of bytes. It does so more efficiently than if each block was checksumed individually, building the next checksum from the value of the previous one.  Typically, an initial word of data is used to create the first hash, and then additional single bytes of data for each additional hash generated.  For example:
 
 ```go
-hb, err := NewHashBuffer(filespec, bufferSize, windowSize)
+hb, err := NewFileHashBuffer(filespec, bufferSize, windowSize)
 window, err = hb.GetWindow()
 // initialize hash algorithm using `window`
 // do...
@@ -22,7 +22,7 @@ window, err = hb.GetWindow()
 A standard hash algorithm takes a word of data and creates a checksum.  For example:
 
 ```go
-hb, err := NewHashBuffer(filespec, bufferSize, windowSize)
+hb, err := NewFileHashBuffer(filespec, bufferSize, windowSize)
 // do...
     // read the next available word from the file
     window, err = hb.GetWindow()
@@ -33,7 +33,7 @@ hb, err := NewHashBuffer(filespec, bufferSize, windowSize)
 
 The `HashBuffer` interface defines the available operations and `FileHashBuffer` provides a file-based implementation.
 
-`NewHashBuffer()` creates a `FileHashBuffer` from a specified file name and the size of buffer to be used. The buffer can be any reasonable size larger than the window size.  This opens the file.  Your code should call, or defer a call, to `Close()`, although if the file is read completely, `Close()` is automatically called; calling it more than once is not an error.
+`NewFileHashBuffer()` creates a `FileHashBuffer` from a specified file name and the size of buffer to be used. The buffer can be any reasonable size larger than the window size.  This opens the file.  Your code should call, or defer a call, to `Close()`, although if the file is read completely, `Close()` is automatically called; calling it more than once is not an error.
 
 `Close()` closes the associated file and the Hashbuffer.
 
