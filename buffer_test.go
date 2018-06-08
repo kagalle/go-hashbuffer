@@ -23,7 +23,7 @@ func TestBufferEmptyFileWithGet(t *testing.T) {
 	const windowSize = 16
 
 	t.Log("start TestData_0_WithGet")
-	hb, err := NewHashBuffer("./testdata/data_0", bufferSize, windowSize)
+	hb, err := NewFileHashBuffer("./testdata/data_0", bufferSize, windowSize)
 	check(t, err)
 	hb.SetTesting(t)
 	defer func() {
@@ -42,7 +42,7 @@ func TestBufferEmptyFileWithGetNext(t *testing.T) {
 	const windowSize = 16
 
 	t.Log("start TestData_0_WithGetNext")
-	hb, err := NewHashBuffer("./testdata/data_0", bufferSize, windowSize)
+	hb, err := NewFileHashBuffer("./testdata/data_0", bufferSize, windowSize)
 	check(t, err)
 	hb.SetTesting(t)
 	defer func() {
@@ -60,7 +60,7 @@ func TestBufferOneByteFileWithGet(t *testing.T) {
 	const windowSize = 16
 
 	t.Log("start TestData_1_WithGet")
-	hb, err := NewHashBuffer("./testdata/data_1", bufferSize, windowSize)
+	hb, err := NewFileHashBuffer("./testdata/data_1", bufferSize, windowSize)
 	check(t, err)
 	hb.SetTesting(t)
 	defer func() {
@@ -78,7 +78,7 @@ func TestBufferOneByteFileWithGetNext(t *testing.T) {
 	const windowSize = 16
 
 	t.Log("start TestData_1_WithGetNext")
-	hb, err := NewHashBuffer("./testdata/data_1", bufferSize, windowSize)
+	hb, err := NewFileHashBuffer("./testdata/data_1", bufferSize, windowSize)
 	check(t, err)
 	hb.SetTesting(t)
 	defer func() {
@@ -141,7 +141,7 @@ func TestSkip(t *testing.T) {
 	const title = "TestSkip"
 
 	t.Logf("start %s", title)
-	hb, err := NewHashBuffer("./testdata/data_17", bufferSize, windowSize)
+	hb, err := NewFileHashBuffer("./testdata/data_17", bufferSize, windowSize)
 	check(t, err)
 	hb.SetTesting(t)
 	defer func() {
@@ -165,7 +165,7 @@ func TestSkipWithBufferFill(t *testing.T) {
 	const title = "TestSkipWithBufferFill"
 
 	t.Logf("start %s", title)
-	hb, err := NewHashBuffer("./testdata/data_1025", bufferSize, windowSize)
+	hb, err := NewFileHashBuffer("./testdata/data_1025", bufferSize, windowSize)
 	check(t, err)
 	hb.SetTesting(t)
 	defer func() {
@@ -189,7 +189,7 @@ func TestSkipPastEOF(t *testing.T) {
 	const title = "TestSkipPastEOF"
 
 	t.Logf("start %s", title)
-	hb, err := NewHashBuffer("./testdata/data_1025", bufferSize, windowSize)
+	hb, err := NewFileHashBuffer("./testdata/data_1025", bufferSize, windowSize)
 	check(t, err)
 	hb.SetTesting(t)
 	defer func() {
@@ -211,7 +211,7 @@ func testBufferFullSizeOfVariousLengthsWithGetNext(t *testing.T, filename string
 	const windowSize = 16
 
 	t.Logf("start %s", title)
-	hb, err := NewHashBuffer(filename, bufferSize, windowSize)
+	hb, err := NewFileHashBuffer(filename, bufferSize, windowSize)
 	check(t, err)
 	hb.SetTesting(t)
 	defer func() {
@@ -233,7 +233,7 @@ func testBufferFullSizeOfVariousLengthsWithGet(t *testing.T, filename string, ti
 	const windowSize = 16
 
 	t.Logf("start %s", title)
-	hb, err := NewHashBuffer(filename, bufferSize, windowSize)
+	hb, err := NewFileHashBuffer(filename, bufferSize, windowSize)
 	check(t, err)
 	hb.SetTesting(t)
 	defer func() {
@@ -256,7 +256,7 @@ func testCompareReadToFileOfVariousLengthsWithGetNext(t *testing.T, filename str
 
 	t.Logf("start %s", title)
 	compareBuffer := make([]byte, expectedSize)
-	hb, err := NewHashBuffer(filename, bufferSize, windowSize)
+	hb, err := NewFileHashBuffer(filename, bufferSize, windowSize)
 	check(t, err)
 	hb.SetTesting(t)
 	defer func() {
@@ -287,7 +287,7 @@ func testCompareReadToFileOfVariousLengthsWithGet(t *testing.T, filename string,
 
 	t.Logf("start %s", title)
 	compareBuffer := make([]byte, expectedSize)
-	hb, err := NewHashBuffer(filename, bufferSize, windowSize)
+	hb, err := NewFileHashBuffer(filename, bufferSize, windowSize)
 	check(t, err)
 	hb.SetTesting(t)
 	defer func() {
